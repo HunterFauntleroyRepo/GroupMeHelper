@@ -1,8 +1,10 @@
 import requests
 
+import Utilities
+
 # Replace with your GroupMe access token and group ID
-ACCESS_TOKEN = "ZcLEyFLPM3LY6TKwgBpRDi3PgQdAWmKaWCaDGWEe"
-GROUP_ID = "109951712"
+ACCESS_TOKEN = Utilities.ACCESS_TOKEN
+GROUP_ID = Utilities.GROUP_ID
 
 # API endpoint to get group details
 url = f"https://api.groupme.com/v3/groups/{GROUP_ID}?token={ACCESS_TOKEN}"
@@ -23,3 +25,4 @@ def listOfMembers(self):
             print(f"- {member['nickname']} (ID: {member['user_id']})")
     else:
         print(f"Error: {response.status_code} - {response.text}")
+        
