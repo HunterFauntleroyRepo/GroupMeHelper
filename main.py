@@ -2,12 +2,9 @@ import requests
 
 import Utilities
 
-# Replace with your GroupMe access token and group ID
-ACCESS_TOKEN = Utilities.ACCESS_TOKEN
-GROUP_ID = Utilities.GROUP_ID
 
 # API endpoint to get group details
-url = f"https://api.groupme.com/v3/groups/{GROUP_ID}?token={ACCESS_TOKEN}"
+url = Utilities.GROUP_URL
 
 
     
@@ -26,3 +23,17 @@ def listOfMembers(self):
     else:
         print(f"Error: {response.status_code} - {response.text}")
         
+        
+def sendMessage(self, text):
+    payload = {
+        "bot_id": Utilities.BOT_ID,
+        "text": text
+    }
+    response = requests.post(url, json=payload)
+    if response.status_code == 202:
+        print("Message sent successfully!")
+    else:
+        print(f"Failed to send message: {response.status_code}")
+        
+        
+

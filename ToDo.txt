@@ -1,0 +1,4 @@
+1. Set up a bot to send out a weekly schedule
+2. Generalize so that it can work with any GroupMe
+3. send output to a text file
+4. 
