@@ -9,8 +9,8 @@ from dataclasses import dataclass
 url = Utilities.GROUP_URL
 
 
-    
-# Print all members in group
+
+# Checks a group of people and adds in anyone in the GroupMe that isn't in the group
 def listOfMembers(self):
     # Use the existing Person class
 
@@ -32,8 +32,8 @@ def listOfMembers(self):
     else:
         print(f"Error: {response.status_code} - {response.text}")
         return []
-        
-        
+
+
 def sendMessage(self, text):
     payload = {
         "bot_id": Utilities.BOT_ID,
@@ -44,6 +44,19 @@ def sendMessage(self, text):
         print("Message sent successfully!")
     else:
         print(f"Failed to send message: {response.status_code}")
-        
-        
 
+
+
+def saveGroup(People):
+        filename = "group_members.txt"
+        try:
+            with open(filename, "w", encoding="utf-8") as f:
+                count = 0
+                for p in People:
+                    f.write(f"{p.get_name()}\t{p.get_community_service_hours()}\n")
+                    count += 1
+            print(f"Saved {count} members to {filename}")
+            return True
+        except Exception as e:
+            print(f"Failed to save group: {e}")
+            return False
