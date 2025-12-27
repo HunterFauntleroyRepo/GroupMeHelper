@@ -1,234 +1,141 @@
 import requests
-
 import Person
 import People
 import Utilities
 from dataclasses import dataclass
 
 
-# API endpoint to get group details
-url = Utilities.GROUP_URL
-
-# Defer group initialization until after function definition
-
-def main():
-    group = loadGroupFromFile()
-    if group is None:
-        print("No group data found. Creating empty group...")
-        group = People.People(name="Default Group", members=[])
-    # ...rest of your main routine...
-
-if __name__ == "__main__":
-    main()
-
-
-
-
-# Checks a group of people and adds in anyone in the GroupMe that isn't in the group
-def listOfMembers(self):
-    # Use the existing Person class
-
-    # Make the request
-    response = requests.get(url)
-
-    people = []
-    if response.status_code == 200:
-        group_data = response.json()
-        members = group_data.get('response', {}).get('members', [])
-
-        for member in members:
-            people.append(Person(
-                name=member.get('nickname'),
-                community_hours=0  # Defaulting community hours to 0
-            ))
-
-        return people
-    else:
+def fetch_groupme_members():
+    """Fetch members from GroupMe API → return People.People instance."""
+    response = requests.get(Utilities.GROUP_URL)
+    if response.status_code != 200:
         print(f"Error: {response.status_code} - {response.text}")
-        return []
+        return People.People(name="Default Group", members=[])
+
+    data = response.json()
+    members = data.get("response", {}).get("members", [])
+    people = [
+        Person.Person(
+            name=m.get("nickname"),
+            community_hours=0
+        ) for m in members
+    ]
+    return People.People(name="Default Group", members=people)
 
 
-def sendMessage(self, text):
-    payload = {
-        "bot_id": Utilities.BOT_ID,
-        "text": text
-    }
-    response = requests.post(url, json=payload)
-    if response.status_code == 202:
-        print("Message sent successfully!")
-    else:
-        print(f"Failed to send message: {response.status_code}")
-
-
-
-def saveGroup(People):
-        filename = "group_members.txt"
-        try:
-            with open(filename, "w", encoding="utf-8") as f:
-                count = 0
-                for p in People:
-                    f.write(f"{p.get_name()}\t{p.get_community_service_hours()}\n")
-                    count += 1
-            print(f"Saved {count} members to {filename}")
-            return True
-        except Exception as e:
-            print(f"Failed to save group: {e}")
-            return False
-
-
-def loadGroupFromFile():
-    """
-    Load a People object from the text file specified in Utilities.SAVE_FILE_NAME.
-    This function should be called on start to load existing group data.
-
-    Returns:
-        A People object if successful, None otherwise.
-    """
+def load_group_from_file():
     filename = Utilities.SAVE_FILE_NAME
-    group = People.People.load_from_file(filename)
-    return group
+    return People.People.load_from_file(filename)
 
 
-def print_help():
-    """Print available commands."""
-    print("\n" + "=" * 60)
-    print("Available Commands:")
-    print("=" * 60)
-    print("  view all          - View all members and their community hours")
-    print("  view below        - View members below the required hours goal")
-    print("  reset             - Reset all members' community hours to 0")
-    print("  save              - Save current group data to file")
-    print("  help              - Show this help message")
-    print("  exit / quit       - Exit the program")
-    print("=" * 60 + "\n")
+def save_group(group):
+    filename = Utilities.SAVE_FILE_NAME
+    if group.save_to_file(filename):
+        print(f"\nSaved group to {filename}\n")
+    else:
+        print("\nFailed to save group\n")
 
 
 def view_all_members(group):
-    """Display all members and their community service hours."""
     members = group.get_members()
     if not members:
         print("No members found.")
         return
 
     print("\n" + "=" * 60)
-    print(f"All Members ({len(members)} total):")
+    print(f"All Members ({len(members)} total)")
     print("=" * 60)
     print(f"{'Name':<40} {'Hours':<10}")
     print("-" * 60)
-
-    for member in members:
-        name = member.get_name()
-        hours = member.get_community_service_hours()
-        print(f"{name:<40} {hours:<10}")
-
+    for m in members:
+        print(f"{m.get_name():<40} {m.get_community_service_hours():<10}")
     print("=" * 60 + "\n")
 
 
 def view_members_below_goal(group):
-    """Display members who haven't reached the required community hours."""
-    required_hours = Utilities.REQUIRED_COMMUNITY_HOURS
-    below_goal = group.get_members_below_goal(required_hours)
-
-    if not below_goal:
-        print(f"\nAll members have reached the required {required_hours} hours!\n")
+    req = Utilities.REQUIRED_COMMUNITY_HOURS
+    below = group.get_members_below_goal(req)
+    if not below:
+        print(f"\nAll members met the required {req} hours!\n")
         return
 
-    print("\n" + "=" * 60)
-    print(f"Members Below Goal ({required_hours} hours required):")
+    print("\nMembers Below Goal:")
     print("=" * 60)
-    print(f"{'Name':<40} {'Hours':<10} {'Needed':<10}")
-    print("-" * 60)
-
-    for member in below_goal:
-        name = member.get_name()
-        hours = member.get_community_service_hours()
-        needed = required_hours - hours
-        print(f"{name:<40} {hours:<10} {needed:<10.1f}")
-
+    for m in below:
+        hrs = m.get_community_service_hours()
+        needed = req - hrs
+        print(f"{m.get_name():<40} {hrs:<10} Need: {needed:<10}")
     print("=" * 60 + "\n")
 
 
 def reset_community_hours(group):
-    """Reset all members' community service hours to 0."""
-    count = group.reset_all_community_hours()
-    print(f"\nReset community hours for {count} member(s).\n")
+    cnt = group.reset_all_community_hours()
+    print(f"\nReset hours for {cnt} members.\n")
 
 
-def save_group(group):
-    """Save the group to file."""
-    filename = Utilities.SAVE_FILE_NAME
-    if group.save_to_file(filename):
-        print(f"\nGroup saved successfully to {filename}\n")
-    else:
-        print(f"\nFailed to save group to {filename}\n")
+def print_help():
+    print("""
+============================== Commands ==============================
+view all        - View all members
+view below      - View members below required hours
+reset           - Reset all hours to 0
+populate        - Pull GroupMe members + merge into existing group
+save            - Save to file
+help            - Show this help
+exit            - Quit program
+======================================================================
+""")
 
 
 def main():
-    """Main command-line interface loop."""
     print("=" * 60)
     print("GroupMe Helper - Community Hours Manager")
     print("=" * 60)
 
-    # Load group from file on start
-    print(f"\nLoading group from {Utilities.SAVE_FILE_NAME}...")
-    group = loadGroupFromFile()
-
-    if group is None:
-        print("No group data found. Creating empty group...")
+    group = load_group_from_file()
+    if not group:
+        print("No saved data found → creating blank group.")
         group = People.People(name="Default Group", members=[])
 
-    print(f"Group loaded: {group.get_name()}")
-    print(f"Members: {len(group.get_members())}")
-    print(f"Required hours: {Utilities.REQUIRED_COMMUNITY_HOURS}")
-
+    print(f"Loaded group: {group.get_name()} ({len(group.get_members())} members)")
     print_help()
 
-    # Command loop
     while True:
-        try:
-            command = input("Enter command (type 'help' for options): ").strip().lower()
+        cmd = input("Command > ").strip().lower()
 
-            if command in ['exit', 'quit', 'q']:
-                # Ask if user wants to save before exiting
-                save_choice = input("Save changes before exiting? (y/n): ").strip().lower()
-                if save_choice == 'y':
-                    save_group(group)
-                print("Goodbye!")
-                break
-
-            elif command in ['view all', 'viewall', 'list', 'all']:
-                view_all_members(group)
-
-            elif command in ['view below', 'viewbelow', 'below', 'incomplete']:
-                view_members_below_goal(group)
-
-            elif command in ['reset', 'reset hours', 'resetall']:
-                confirm = input("Are you sure you want to reset all community hours? (y/n): ").strip().lower()
-                if confirm == 'y':
-                    reset_community_hours(group)
-                    save_choice = input("Save changes? (y/n): ").strip().lower()
-                    if save_choice == 'y':
-                        save_group(group)
-                else:
-                    print("Reset cancelled.\n")
-
-            elif command in ['save', 's']:
-                save_group(group)
-
-            elif command in ['help', 'h', '?']:
-                print_help()
-
-            else:
-                print(f"Unknown command: {command}. Type 'help' for available commands.\n")
-
-        except KeyboardInterrupt:
-            print("\n\nInterrupted by user. Exiting...")
-            save_choice = input("Save changes before exiting? (y/n): ").strip().lower()
-            if save_choice == 'y':
+        if cmd in ["exit", "quit", "q"]:
+            if input("Save before exit? (y/n) ").lower() == "y":
                 save_group(group)
             break
-        except Exception as e:
-            print(f"Error: {e}\n")
+
+        elif cmd in ["view all", "all"]:
+            view_all_members(group)
+
+        elif cmd in ["view below", "below"]:
+            view_members_below_goal(group)
+
+        elif cmd in ["reset"]:
+            if input("Confirm reset? (y/n) ").lower() == "y":
+                reset_community_hours(group)
+
+        elif cmd in ["populate", "sync"]:
+            new_group = fetch_groupme_members()
+            existing_names = set(m.get_name() for m in group.get_members())
+            added = 0
+            for member in new_group.get_members():
+                if member.get_name() not in existing_names:
+                    group.get_members().append(member)
+                    added += 1
+            print(f"Added {added} new GroupMe members.\n")
+
+        elif cmd in ["save", "s"]:
+            save_group(group)
+
+        elif cmd in ["help", "h", "?"]:
+            print_help()
+
+        else:
+            print("Unknown command — type 'help' for options")
 
 
 if __name__ == "__main__":
