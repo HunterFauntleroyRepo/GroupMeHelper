@@ -1,4 +1,4 @@
-import AbstractPeople
+from AbstractPeople import AbstractPeople
 
 class Person(AbstractPeople):
     def __init__(self, name: str, community_hours: int):
