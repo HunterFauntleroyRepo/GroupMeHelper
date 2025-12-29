@@ -11,7 +11,7 @@ def fetch_groupme_members():
     if response.status_code != 200:
         print(f"Error: {response.status_code} - {response.text}")
         return People.People(name="Default Group", members=[])
-
+# Parse JSON response
     data = response.json()
     members = data.get("response", {}).get("members", [])
     people = [
